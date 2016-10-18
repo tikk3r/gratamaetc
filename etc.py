@@ -23,10 +23,16 @@ class ETC(QWidget):
     '''
     def __init__(self):
         super(ETC, self).__init__()
+        # Telescope properties.
+        self.all_filters = ['U', 'V', 'B', 'R', 'Ha', 'Hb', 'OIII', 'SII']
+        # Logger.
         self.loghandler = TextLogger(self)
         logging.getLogger().addHandler(self.loghandler)
         logging.getLogger().setLevel(logging.INFO)
         self.setup()
+    
+    def select_filter(self, filter):
+        print 'Filter changed to {:s}'.format(self.all_filters[filter])
         
     def setup(self):
         ''' Setup the inital state of the calculator.
@@ -40,9 +46,9 @@ class ETC(QWidget):
         label_sovern = QLabel('Signal to Noise: ')
         label_filters = QLabel('Filter: ')
         
-        all_filters = ['U', 'V', 'B', 'R', 'Ha', 'Hb', 'OII', 'SIII']
         filters = QComboBox()
-        filters.addItems(all_filters)
+        filters.addItems(self.all_filters)
+        filters.currentIndexChanged.connect(self.select_filter)
         
         exptime = QLineEdit()
         sovern = QLineEdit()
