@@ -3,9 +3,12 @@ from PyQt4.QtGui import QApplication, QComboBox, QGridLayout, QLabel, QLineEdit,
 from PyQt4 import QtCore
 import logging
 import sys
+
+# Also have logging output to the console.
 logging.basicConfig(level=logging.DEBUG, format=' %(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
 class TextLogger(logging.Handler):
-    ''' A logger to record the users actions.
+    ''' A logger to record the users actions and write them to a QPlainTextEdit widget.
     '''
     def __init__(self, parent):
         super(TextLogger, self).__init__()
@@ -14,6 +17,10 @@ class TextLogger(logging.Handler):
         self.widget.setReadOnly(True)
     
     def emit(self, record):
+        ''' Log a message.
+        Args:
+            record (str) : the message to log.
+        '''
         message = self.format(record)
         self.widget.appendPlainText(message)
 
@@ -23,6 +30,7 @@ class ETC(QWidget):
     '''
     def __init__(self):
         super(ETC, self).__init__()
+        self.widgets = {}
         # Telescope properties.
         self.all_filters = ['U', 'V', 'B', 'R', 'Ha', 'Hb', 'OIII', 'SII']
         self.src_types = ['Point source', 'Extended']
@@ -33,10 +41,32 @@ class ETC(QWidget):
         logging.getLogger().setLevel(logging.INFO)
         self.setup()
     
+    def active_exptime(self):
+        self.widgets['sovern'].setEnabled(False)
+    
+    def active_sovern(self):
+        self.widgets['exptime'].setEnabled(False)
+    
     def go_calculate(self):
         logging.info('Calculating...')
         
-    def go_reset(self):
+    def go_reset(self, log=True):
+        ''' Reset all fields to their default values.
+        
+        Args:
+            log (bool) : write to the logs yes or no.
+        '''
+        # Reset filter selection.
+        self.widgets['filters'].setCurrentIndex(0)
+        # Reset source type.
+        self.widgets['source'].setCurrentIndex(0)
+        # Reset exposure time.
+        self.widgets['exptime'].setText('10')
+        # Reset signal to noise.
+        self.widgets['sovern'].setText('')
+        # Reset object apparent magnitude.
+        self.widgets['mag'].setText('20')
+        # Write to the log.
         logging.info('Gratama ETC reset to default values.')
     
     def select_filter(self, filter):
@@ -57,30 +87,29 @@ class ETC(QWidget):
         label_sovern = QLabel('Signal to Noise: ')
         label_filters = QLabel('Filter: ')
         
-        filters = QComboBox()
+        filters = QComboBox(); self.widgets['filters'] = filters
         filters.addItems(self.all_filters)
         filters.currentIndexChanged.connect(self.select_filter)
         
-        exptime = QLineEdit()
-        sovern = QLineEdit()
+        exptime = QLineEdit(); self.widgets['exptime'] = exptime
+        sovern = QLineEdit(); self.widgets['sovern'] = sovern
         
         # Source section.
         title_src = QLabel('Source Parameters')
         label_type = QLabel('Source type: ')
         label_mag = QLabel('Apparent Magnitude: ')
         
-        srctype = QComboBox()
+        srctype = QComboBox(); self.widgets['source'] = srctype
         srctype.addItems(self.src_types)
         srctype.currentIndexChanged.connect(self.select_source)
         
-        mag = QLineEdit()
+        mag = QLineEdit(); self.widgets['mag'] = mag
         
         # Other components.
         button_reset = QPushButton('Reset')
         button_reset.clicked.connect(self.go_reset)
         button_calculate = QPushButton('Calculate')
         button_calculate.clicked.connect(self.go_calculate)
-        
         
         # Layout the components.
         ########################
@@ -106,6 +135,7 @@ class ETC(QWidget):
         grid.addWidget(QLabel('Logs'), 1, 3)
         grid.addWidget(self.loghandler.widget, 2, 3, 8, 1)
 
+        self.go_reset()
         self.setLayout(grid)
         self.show()
         
