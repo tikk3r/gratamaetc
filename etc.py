@@ -25,14 +25,25 @@ class ETC(QWidget):
         super(ETC, self).__init__()
         # Telescope properties.
         self.all_filters = ['U', 'V', 'B', 'R', 'Ha', 'Hb', 'OIII', 'SII']
+        self.src_types = ['Point source', 'Extended']
+        
         # Logger.
         self.loghandler = TextLogger(self)
         logging.getLogger().addHandler(self.loghandler)
         logging.getLogger().setLevel(logging.INFO)
         self.setup()
     
+    def go_calculate(self):
+        logging.info('Calculating...')
+        
+    def go_reset(self):
+        logging.info('Gratama ETC reset to default values.')
+    
     def select_filter(self, filter):
-        print 'Filter changed to {:s}'.format(self.all_filters[filter])
+        logging.info('Changed filter to {:s}'.format(self.all_filters[filter]))
+        
+    def select_source(self, src):
+        logging.info('Changed source type to {:s}'.format(self.src_types[src]))
         
     def setup(self):
         ''' Setup the inital state of the calculator.
@@ -58,12 +69,19 @@ class ETC(QWidget):
         label_type = QLabel('Source type: ')
         label_mag = QLabel('Apparent Magnitude: ')
         
-        types = ['Point source', 'Extended']
         srctype = QComboBox()
-        srctype.addItems(types)
+        srctype.addItems(self.src_types)
+        srctype.currentIndexChanged.connect(self.select_source)
         
         mag = QLineEdit()
-
+        
+        # Other components.
+        button_reset = QPushButton('Reset')
+        button_reset.clicked.connect(self.go_reset)
+        button_calculate = QPushButton('Calculate')
+        button_calculate.clicked.connect(self.go_calculate)
+        
+        
         # Layout the components.
         ########################
         grid = QGridLayout()
@@ -82,9 +100,11 @@ class ETC(QWidget):
         grid.addWidget(label_type, 7, 0); grid.addWidget(srctype, 7, 1)
         grid.addWidget(label_mag, 8, 0); grid.addWidget(mag, 8, 1)
         
+        grid.addWidget(button_reset, 9, 0); grid.addWidget(button_calculate, 9, 1)
+        
         # Logger window.
-        grid.addWidget(QLabel('Logs'), 9, 0)
-        grid.addWidget(self.loghandler.widget, 10, 0, 1, 2)
+        grid.addWidget(QLabel('Logs'), 1, 3)
+        grid.addWidget(self.loghandler.widget, 2, 3, 8, 1)
 
         self.setLayout(grid)
         self.show()
