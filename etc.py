@@ -47,8 +47,12 @@ class ETC(QWidget):
     def active_sovern(self):
         self.widgets['exptime'].setEnabled(False)
     
+    def clear_log(self):
+        self.loghandler.widget.setPlainText('')
+    
     def go_calculate(self):
-        logging.info('Calculating...')
+        logging.info('Calculating')
+        logging.info('Done calculating.')
         
     def go_reset(self, log=True):
         ''' Reset all fields to their default values.
@@ -108,8 +112,12 @@ class ETC(QWidget):
         # Other components.
         button_reset = QPushButton('Reset')
         button_reset.clicked.connect(self.go_reset)
+        
         button_calculate = QPushButton('Calculate')
         button_calculate.clicked.connect(self.go_calculate)
+        
+        button_clearlog = QPushButton('Clear Log')
+        button_clearlog.clicked.connect(self.clear_log)
         
         # Layout the components.
         ########################
@@ -133,7 +141,8 @@ class ETC(QWidget):
         
         # Logger window.
         grid.addWidget(QLabel('Logs'), 1, 3)
-        grid.addWidget(self.loghandler.widget, 2, 3, 8, 1)
+        grid.addWidget(self.loghandler.widget, 2, 3, 7, 1)
+        grid.addWidget(button_clearlog, 9, 3)
 
         self.go_reset()
         self.setLayout(grid)
