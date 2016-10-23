@@ -1,6 +1,10 @@
-#!/usr/bin/env python
-from PyQt4.QtGui import QApplication, QComboBox, QGridLayout, QLabel, QLineEdit, QPainter, QPlainTextEdit, QPushButton, QWidget
+from functools import partial
+
+from PyQt4.QtGui import QApplication, QComboBox, QGridLayout, QLabel, QLineEdit, QPainter, QPlainTextEdit, QPushButton, QRadioButton, QWidget
 from PyQt4 import QtCore
+
+import astrotools
+
 import logging
 import sys
 
@@ -34,6 +38,7 @@ class ETC(QWidget):
         # Telescope properties.
         self.all_filters = ['U', 'V', 'B', 'R', 'Ha', 'Hb', 'OIII', 'SII']
         self.src_types = ['Point source', 'Extended']
+        self.quantities = ['Signal to Noise', 'Exposure Time', 'Limiting Magnitude']
         
         # Logger.
         self.loghandler = TextLogger(self)
@@ -41,24 +46,25 @@ class ETC(QWidget):
         logging.getLogger().setLevel(logging.INFO)
         self.setup()
     
-    def active_exptime(self):
-        self.widgets['sovern'].setEnabled(False)
+    def add_action(self, widget, event, action):
+        'self.{0:s}.{1:s}.connect({2:s})'.format(self.widgets[widget], event, action)
     
-    def active_sovern(self):
-        self.widgets['exptime'].setEnabled(False)
-    
-    def clear_log(self):
+    def go_clearlog(self):
         self.loghandler.widget.setPlainText('')
     
-    def go_calculate(self):
-        logging.info('Calculating')
-        logging.info('Done calculating.')
+    def go_calculate(self, mode):
+        logging.info('Calculating ' + self.widgets['quantity'].currentText())
+        logging.info(mode)
+        if mode == 0:
+            astrotools.signal_to_noise()
+        elif mode == 1:
+            pass
+        elif mode == 2:
+            pass
+        logging.info('Finished')
         
-    def go_reset(self, log=True):
+    def go_reset(self):
         ''' Reset all fields to their default values.
-        
-        Args:
-            log (bool) : write to the logs yes or no.
         '''
         # Reset filter selection.
         self.widgets['filters'].setCurrentIndex(0)
@@ -73,12 +79,41 @@ class ETC(QWidget):
         # Write to the log.
         logging.info('Gratama ETC reset to default values.')
     
+    def reconnect(self, signal, newhandler=None, oldhandler=None):
+        while True:
+            try:
+                if oldhandler is not None:
+                    signal.disconnect(oldhandler)
+                else:
+                    signal.disconnect()
+            except TypeError:
+                break
+        if newhandler is not None:
+            signal.connect(newhandler)
+    
     def select_filter(self, filter):
         logging.info('Changed filter to {:s}'.format(self.all_filters[filter]))
         
     def select_source(self, src):
         logging.info('Changed source type to {:s}'.format(self.src_types[src]))
-        
+    
+    def select_quantity(self, q):
+        logging.info('Changed calculation to {:s}'.format(self.quantities[q]))
+        if q == 0:
+            # Signal to noise selected.
+            handler = partial(self.go_calculate, 0)
+        elif q == 1:
+            # Exposure time selected.
+            handler = partial(self.go_calculate, 1)
+        elif q == 2:
+            # Limiting magnitude selected.
+            handler = partial(self.go_calculate, 2)
+        # Update the event handler.
+        self.reconnect(self.widgets['calc'].clicked, newhandler=handler)
+    
+    def run(self, app):
+        app.exec_()
+    
     def setup(self):
         ''' Setup the inital state of the calculator.
         
@@ -113,11 +148,17 @@ class ETC(QWidget):
         button_reset = QPushButton('Reset')
         button_reset.clicked.connect(self.go_reset)
         
-        button_calculate = QPushButton('Calculate')
+        button_calculate = QPushButton('Calculate'); self.widgets['calc'] = button_calculate
         button_calculate.clicked.connect(self.go_calculate)
         
         button_clearlog = QPushButton('Clear Log')
-        button_clearlog.clicked.connect(self.clear_log)
+        button_clearlog.clicked.connect(self.go_clearlog)
+        
+        label_quantity = QLabel('Quantity to Calculate: ')
+        quantity = QComboBox(); self.widgets['quantity'] = quantity
+        quantity.addItems(self.quantities)
+        quantity.currentIndexChanged.connect(self.select_quantity)
+        self.select_quantity(0)
         
         # Layout the components.
         ########################
@@ -130,21 +171,22 @@ class ETC(QWidget):
         grid.addWidget(label_exptime, 3, 0); grid.addWidget(exptime, 3, 1)
         grid.addWidget(label_sovern, 4, 0); grid.addWidget(sovern, 4, 1)
         
+        grid.addWidget(label_quantity, 0, 0); grid.addWidget(quantity, 0, 1)
 
         # Source widgets.
-        grid.addWidget(QLabel(''), 5, 0)
         grid.addWidget(title_src, 6, 0)
         grid.addWidget(label_type, 7, 0); grid.addWidget(srctype, 7, 1)
         grid.addWidget(label_mag, 8, 0); grid.addWidget(mag, 8, 1)
         
+        # Other widgets
         grid.addWidget(button_reset, 9, 0); grid.addWidget(button_calculate, 9, 1)
-        
         # Logger window.
-        grid.addWidget(QLabel('Logs'), 1, 3)
-        grid.addWidget(self.loghandler.widget, 2, 3, 7, 1)
-        grid.addWidget(button_clearlog, 9, 3)
+        grid.addWidget(QLabel('Logs'), 0, 3)
+        grid.addWidget(self.loghandler.widget, 1, 3, 8, 2)
+        grid.addWidget(button_clearlog, 9, 3, 1, 2)
 
         self.go_reset()
+        self.go_clearlog()
         self.setLayout(grid)
         self.show()
         
