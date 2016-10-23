@@ -70,6 +70,6 @@ def signal_to_noise(band, Nobj, Nsky, rdn, fwhm, scale, extended=False):
         # Extended source.
         P = 1
     num = N
-    denom = math.sqrt(N + P * (S + rdn**2)
+    denom = math.sqrt(N + P * (S + rdn**2))
     sn = num / denom
     return sn
