@@ -56,7 +56,22 @@ class ETC(QWidget):
         logging.info('Calculating ' + self.widgets['quantity'].currentText())
         logging.info(mode)
         if mode == 0:
-            astrotools.signal_to_noise()
+            #signal_to_noise(band, Nobj, Nsky, fwhm, scale, t, extended=False)
+            #try:
+            filter = str(self.widgets['filters'].currentText())
+            src = float(self.widgets['magsrc'].displayText())
+            sky = float(self.widgets['magsky'].displayText())
+            fwhm = float(self.widgets['seeing'].displayText())
+            t = float(self.widgets['exptime'].displayText())
+            e = self.widgets['source'].currentText()
+            if e == 'Extended':
+                ext = True
+            else:
+                ext = False
+            #except:
+            #    logging.warning('Check parameters.')
+            sn = astrotools.signal_to_noise(filter, src, sky, fwhm, 0.580, t, ext)
+            logging.info('Signal-to-noise: {0:.2g}'.format(sn))
         elif mode == 1:
             pass
         elif mode == 2:
@@ -75,7 +90,11 @@ class ETC(QWidget):
         # Reset signal to noise.
         self.widgets['sovern'].setText('')
         # Reset object apparent magnitude.
-        self.widgets['mag'].setText('20')
+        self.widgets['magsrc'].setText('20')
+        # Reset sky magnitude.
+        self.widgets['magsky'].setText('21')
+        # Reset seeing.
+        self.widgets['seeing'].setText('1')
         # Write to the log.
         logging.info('Gratama ETC reset to default values.')
     
@@ -102,12 +121,30 @@ class ETC(QWidget):
         if q == 0:
             # Signal to noise selected.
             handler = partial(self.go_calculate, 0)
+            self.widgets['sovern'].setReadOnly(True)
+            self.widgets['sovern'].setEnabled(False)
+            self.widgets['magsrc'].setReadOnly(False)
+            self.widgets['magsrc'].setEnabled(True)
+            self.widgets['exptime'].setReadOnly(False)
+            self.widgets['exptime'].setEnabled(True)
         elif q == 1:
             # Exposure time selected.
             handler = partial(self.go_calculate, 1)
+            self.widgets['sovern'].setReadOnly(False)
+            self.widgets['sovern'].setEnabled(True)
+            self.widgets['magsrc'].setReadOnly(False)
+            self.widgets['magsrc'].setEnabled(True)
+            self.widgets['exptime'].setReadOnly(True)
+            self.widgets['exptime'].setEnabled(False)
         elif q == 2:
             # Limiting magnitude selected.
             handler = partial(self.go_calculate, 2)
+            self.widgets['sovern'].setReadOnly(False)
+            self.widgets['sovern'].setEnabled(True)
+            self.widgets['magsrc'].setReadOnly(True)
+            self.widgets['magsrc'].setEnabled(False)
+            self.widgets['exptime'].setReadOnly(False)
+            self.widgets['exptime'].setEnabled(True)
         # Update the event handler.
         self.reconnect(self.widgets['calc'].clicked, newhandler=handler)
     
@@ -142,7 +179,15 @@ class ETC(QWidget):
         srctype.addItems(self.src_types)
         srctype.currentIndexChanged.connect(self.select_source)
         
-        mag = QLineEdit(); self.widgets['mag'] = mag
+        magsrc = QLineEdit(); self.widgets['magsrc'] = magsrc
+        
+        # Sky section.
+        title_sky = QLabel('Sky Parameters')
+        label_skymag = QLabel('Sky magnitude: ')
+        label_seeing = QLabel('Seeing [arcsec]: ')
+        
+        magsky = QLineEdit(); self.widgets['magsky'] = magsky
+        seeing = QLineEdit(); self.widgets['seeing'] = seeing
         
         # Other components.
         button_reset = QPushButton('Reset')
@@ -165,25 +210,28 @@ class ETC(QWidget):
         grid = QGridLayout()
         grid.setSpacing(10)
         
+        grid.addWidget(label_quantity, 0, 0); grid.addWidget(quantity, 0, 1)
         # Telecope widgets.
         grid.addWidget(title_tel, 1, 0)
         grid.addWidget(label_filters, 2, 0); grid.addWidget(filters, 2, 1)
         grid.addWidget(label_exptime, 3, 0); grid.addWidget(exptime, 3, 1)
         grid.addWidget(label_sovern, 4, 0); grid.addWidget(sovern, 4, 1)
-        
-        grid.addWidget(label_quantity, 0, 0); grid.addWidget(quantity, 0, 1)
 
         # Source widgets.
         grid.addWidget(title_src, 6, 0)
         grid.addWidget(label_type, 7, 0); grid.addWidget(srctype, 7, 1)
-        grid.addWidget(label_mag, 8, 0); grid.addWidget(mag, 8, 1)
+        grid.addWidget(label_mag, 8, 0); grid.addWidget(magsrc, 8, 1)
+        
+        grid.addWidget(title_sky, 9, 0)
+        grid.addWidget(label_skymag, 10, 0); grid.addWidget(magsky, 10, 1)
+        grid.addWidget(label_seeing, 11, 0); grid.addWidget(seeing, 11, 1)
         
         # Other widgets
-        grid.addWidget(button_reset, 9, 0); grid.addWidget(button_calculate, 9, 1)
+        grid.addWidget(button_reset, 12, 0); grid.addWidget(button_calculate, 12, 1)
         # Logger window.
         grid.addWidget(QLabel('Logs'), 0, 3)
-        grid.addWidget(self.loghandler.widget, 1, 3, 8, 2)
-        grid.addWidget(button_clearlog, 9, 3, 1, 2)
+        grid.addWidget(self.loghandler.widget, 1, 3, 11, 2)
+        grid.addWidget(button_clearlog, 12, 3, 1, 2)
 
         self.go_reset()
         self.go_clearlog()
