@@ -1,0 +1,6 @@
+{
+  "name": "Gratama ETC",
+  "tagline": "An exposure time calculator for the Blaauw Observatory Gratama Telescope.",
+  "body": "### Welcome to the Gratama ETC\r\nWelcome to the documentation! This program is an exposure time calculator for the Gratama Telescope of the Blaauw Observatory. It is meant to aid you in your planning by allowing you to estimate the expected signal to noise ratio, required exposure time or limiting magnitude for your observations.",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}
