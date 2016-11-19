@@ -32,13 +32,16 @@ class TextLogger(logging.Handler):
 class ETC(QWidget):
     ''' The exposure time calculator for the Gratama telescope.
     '''
+    __version__ = '0.1'
+    __name__ = 'GETCAL'
+    __title__ =__name__ + ' v' + __version__
     def __init__(self):
         super(ETC, self).__init__()
         self.widgets = {}
         # Telescope properties.
-        self.all_filters = ['U', 'V', 'B', 'R', 'Ha', 'Hb', 'OIII', 'SII']
+        self.all_filters = ['U', 'V', 'B', 'R']
         self.src_types = ['Point source', 'Extended']
-        self.quantities = ['Signal to Noise', 'Exposure Time', 'Limiting Magnitude']
+        self.quantities = ['Signal to Noise']
         
         # Logger.
         self.loghandler = TextLogger(self)
@@ -223,7 +226,7 @@ class ETC(QWidget):
         
         grid.addWidget(title_sky, 9, 0)
         grid.addWidget(label_skymag, 10, 0); grid.addWidget(magsky, 10, 1)
-        grid.addWidget(label_seeing, 11, 0); grid.addWidget(seeing, 11, 1)
+        #grid.addWidget(label_seeing, 11, 0); grid.addWidget(seeing, 11, 1)
         
         # Other widgets
         grid.addWidget(button_reset, 12, 0); grid.addWidget(button_calculate, 12, 1)
@@ -234,6 +237,8 @@ class ETC(QWidget):
 
         self.go_reset()
         self.go_clearlog()
+        logging.info((self.__title__))
+        logging.info('='*30)
         self.setLayout(grid)
         self.show()
         
