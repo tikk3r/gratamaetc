@@ -54,7 +54,6 @@ class ETC(QWidget):
     
     def go_calculate(self, mode):
         logging.info('Calculating ' + self.widgets['quantity'].currentText())
-        logging.info(mode)
         if mode == 0:
             #signal_to_noise(band, Nobj, Nsky, fwhm, scale, t, extended=False)
             #try:
