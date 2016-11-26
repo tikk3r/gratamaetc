@@ -1,4 +1,8 @@
+import matplotlib
+matplotlib.use('Qt4Agg')
+from matplotlib.pyplot import figure, show
 import math
+import numpy as np
 
 c = 299792458 * 1e2 # cm * s^-1
 h = 6.626e-34 * 1e7 # erg * s
@@ -51,12 +55,31 @@ def exposure_time():
     '''
     pass
 
+def graph_signal_to_noise(band, timerange, snr):
+    ''' Make a graph of the signal to noise over a small timerange.
+
+    Args:
+        band (str) : the observing band.
+        timerange (ndarray) : the timerange over which to plot the snr.
+        snr (ndarray) : SNR to plot.
+    '''
+    # Get observing band specifics.
+    filt = filters[band]
+    fig = figure('Band: '+band)
+    fig.suptitle(band + '-band Signal-to-Noise Ratio', fontweight='bold')
+    ax = fig.add_subplot(111)
+    ax.plot(timerange, snr)
+    ax.grid()
+    ax.set_xlim(timerange[0], timerange[-1])
+    ax.set_xlabel('Exposure Time [s]'); ax.set_ylabel('SNR')
+    show(block=False)
+
 def limiting_magnitude():
     ''' Calculate the limiting magnitude for an observation.
     '''
     pass
     
-def signal_to_noise(band, mag_obj, mag_sky, fwhm, scale, t, extended=False, rdn=11):
+def signal_to_noise(band, mag_obj, mag_sky, fwhm, scale, t, extended=False, rdn=11, plot=True):
     ''' Calculate the signal to noise for an observation.
     
     Args:
@@ -68,19 +91,19 @@ def signal_to_noise(band, mag_obj, mag_sky, fwhm, scale, t, extended=False, rdn=
         t (float) : exposure time [s].
         extended (bool) : whether the object is extended or not. Default is False.
         rdn (float) : readout noise of the CCD [e-]. Default is 11.
+        plot (bool) : make a plot of the SNR.
         
     Returns:
         sn (float) : the signal to noise ratio.
     '''
+    if plot:
+        t = np.linspace(0.5*t, 1.5*t, 1000)
     # Filter width and m=0 flux.
     ew, zf = filters[band].width, filters[band].zero_mag_flux
     # Average photon energy in given band.
     E = (h * c) / filters[band].to_angstrom
     Nobj = convert_magnitude(mag=mag_obj, zero_flux=zf, Ta=1., t=t, A=(math.pi * 400), Tt=1., qe=1.) / E
     Nsky = convert_magnitude(mag=mag_sky, zero_flux=zf, Ta=1., t=t, A=(math.pi * 400), Tt=1., qe=1.) / E
-    
-    print Nobj
-    print Nsky
 
     if not extended:
         # Point source.
@@ -93,6 +116,12 @@ def signal_to_noise(band, mag_obj, mag_sky, fwhm, scale, t, extended=False, rdn=
         S = Nsky * ew * scale**2
         P = 1
     num = N
-    denom = math.sqrt(N + P * (S + rdn**2))
-    sn = num / denom
-    return sn
+    if plot:
+        denom = np.sqrt(N + P * (S + rdn**2))
+        sn = num / denom
+        graph_signal_to_noise(band, t, sn)
+        return sn[500]
+    else:
+        denom = math.sqrt(N + P * (S + rdn**2))
+        sn = num / denom
+        return sn

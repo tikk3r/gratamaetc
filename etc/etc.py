@@ -32,13 +32,16 @@ class TextLogger(logging.Handler):
 class ETC(QWidget):
     ''' The exposure time calculator for the Gratama telescope.
     '''
+    __version__ = '0.1'
+    __name__ = 'GETCAL'
+    __title__ =__name__ + ' v' + __version__
     def __init__(self):
         super(ETC, self).__init__()
         self.widgets = {}
         # Telescope properties.
-        self.all_filters = ['U', 'V', 'B', 'R', 'Ha', 'Hb', 'OIII', 'SII']
+        self.all_filters = ['U', 'V', 'B', 'R']
         self.src_types = ['Point source', 'Extended']
-        self.quantities = ['Signal to Noise', 'Exposure Time', 'Limiting Magnitude']
+        self.quantities = ['Signal to Noise']
         
         # Logger.
         self.loghandler = TextLogger(self)
@@ -53,7 +56,7 @@ class ETC(QWidget):
         self.loghandler.widget.setPlainText('')
     
     def go_calculate(self, mode):
-        logging.info('Calculating ' + self.widgets['quantity'].currentText())
+        logging.info('#'*30)
         if mode == 0:
             #signal_to_noise(band, Nobj, Nsky, fwhm, scale, t, extended=False)
             #try:
@@ -75,7 +78,7 @@ class ETC(QWidget):
             pass
         elif mode == 2:
             pass
-        logging.info('Finished')
+        logging.info('#'*30)
         
     def go_reset(self):
         ''' Reset all fields to their default values.
@@ -214,7 +217,7 @@ class ETC(QWidget):
         grid.addWidget(title_tel, 1, 0)
         grid.addWidget(label_filters, 2, 0); grid.addWidget(filters, 2, 1)
         grid.addWidget(label_exptime, 3, 0); grid.addWidget(exptime, 3, 1)
-        grid.addWidget(label_sovern, 4, 0); grid.addWidget(sovern, 4, 1)
+        #grid.addWidget(label_sovern, 4, 0); grid.addWidget(sovern, 4, 1)
 
         # Source widgets.
         grid.addWidget(title_src, 6, 0)
@@ -223,7 +226,7 @@ class ETC(QWidget):
         
         grid.addWidget(title_sky, 9, 0)
         grid.addWidget(label_skymag, 10, 0); grid.addWidget(magsky, 10, 1)
-        grid.addWidget(label_seeing, 11, 0); grid.addWidget(seeing, 11, 1)
+        #grid.addWidget(label_seeing, 11, 0); grid.addWidget(seeing, 11, 1)
         
         # Other widgets
         grid.addWidget(button_reset, 12, 0); grid.addWidget(button_calculate, 12, 1)
@@ -234,6 +237,8 @@ class ETC(QWidget):
 
         self.go_reset()
         self.go_clearlog()
+        logging.info((self.__title__))
+        logging.info('='*30)
         self.setLayout(grid)
         self.show()
         
